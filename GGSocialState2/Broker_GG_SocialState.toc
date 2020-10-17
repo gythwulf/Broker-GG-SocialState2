@@ -1,15 +1,14 @@
 ## Interface: 60200
-## Title: GGSocialStateSL
+## Title: GGSocialState2
 ## Version: 9.0.1
 ## Notes: A friend/guild list viewer
-## Author: Luzisto, gOOvER
-## Fixed for Shadowlands by: Gythwulf
+## Author: Luzisto, gOOvER, Gythwulf
 ## SavedVariables: GGSocialStateDB
 ## OptionalDeps: Ace3, LibQTip-1.0, LibStub, CallbackHandler-1.0
 ## X-Curse-Packaged-Version: 9.0.1
-## X-Curse-Project-Name: Broker: GG-SocialState-SL
-## X-Curse-Project-ID: broker-gg-socialstate-SL
-## X-Curse-Repository-ID: wow/broker-gg-socialstate/mainline
+## X-Curse-Project-Name: Broker: GGSocialState2
+## X-Curse-Project-ID: broker-ggsocialstate2
+## X-Curse-Repository-ID: wow/broker-gg-socialstate2/mainline
 
 
 #@no-lib-strip@

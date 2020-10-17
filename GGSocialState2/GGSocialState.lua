@@ -17,12 +17,12 @@ local tooltip
 local LDB_ANCHOR
 
 local LDB = LibStub("LibDataBroker-1.1"):NewDataObject("GGSocialState",
-{
-	type	= "data source",
-	icon	= "Interface\\Icons\\INV_Drink_08.png",
-	label	= "GGSocialState",
-	text	= "GGSocialState"
-})
+	{
+		type	= "data source",
+		icon	= "Interface\\Icons\\INV_Drink_08.png",
+		label	= "GGSocialState",
+		text	= "GGSocialState"
+	})
 
 local update_Broker
 --local MyRealm = GetRealmName()
@@ -57,83 +57,83 @@ ssRegFont:SetFont(GameTooltipText:GetFont(), 12)
 
 local list_sort = {
 	TOONNAME	=	function(a, b)
-						return a["TOONNAME"] < b["TOONNAME"]
-					end,
+		return a["TOONNAME"] < b["TOONNAME"]
+	end,
 	LEVEL		=	function(a, b)
-						if a["LEVEL"] < b["LEVEL"] then
-							return true
-						elseif a["LEVEL"] > b["LEVEL"] then
-							return false
-						else  -- TOONNAME
-							return a["TOONNAME"] < b["TOONNAME"]
-						end
-					end,
+		if a["LEVEL"] < b["LEVEL"] then
+			return true
+		elseif a["LEVEL"] > b["LEVEL"] then
+			return false
+		else  -- TOONNAME
+			return a["TOONNAME"] < b["TOONNAME"]
+		end
+	end,
 	RANKINDEX	=	function(a, b)
-						if a["RANKINDEX"] > b["RANKINDEX"] then
-							return true
-						elseif a["RANKINDEX"] < b["RANKINDEX"] then
-							return false
-						else -- TOONNAME
-							return a["TOONNAME"] < b["TOONNAME"]
-						end
-					end,
+		if a["RANKINDEX"] > b["RANKINDEX"] then
+			return true
+		elseif a["RANKINDEX"] < b["RANKINDEX"] then
+			return false
+		else -- TOONNAME
+			return a["TOONNAME"] < b["TOONNAME"]
+		end
+	end,
 	ZONENAME	=	function(a, b)
-						if a["ZONENAME"] < b["ZONENAME"] then
-							return true
-						elseif a["ZONENAME"] > b["ZONENAME"] then
-							return false
-						else -- TOONNAME
-							return a["TOONNAME"] < b["TOONNAME"]
-						end
-					end,
+		if a["ZONENAME"] < b["ZONENAME"] then
+			return true
+		elseif a["ZONENAME"] > b["ZONENAME"] then
+			return false
+		else -- TOONNAME
+			return a["TOONNAME"] < b["TOONNAME"]
+		end
+	end,
 	REALMNAME	=	function(a, b)
-						if a["REALMNAME"] < b["REALMNAME"] then
-							return true
-						elseif a["REALMNAME"] > b["REALMNAME"] then
-							return false
-						else -- TOONNAME
-							return a["ZONENAME"] < b["ZONENAME"]
-						end
-					end,
+		if a["REALMNAME"] < b["REALMNAME"] then
+			return true
+		elseif a["REALMNAME"] > b["REALMNAME"] then
+			return false
+		else -- TOONNAME
+			return a["ZONENAME"] < b["ZONENAME"]
+		end
+	end,
 	revTOONNAME	=	function(a, b)
-						return a["TOONNAME"] > b["TOONNAME"]
-					end,
+		return a["TOONNAME"] > b["TOONNAME"]
+	end,
 	revLEVEL		=	function(a, b)
-						if a["LEVEL"] > b["LEVEL"] then
-							return true
-						elseif a["LEVEL"] < b["LEVEL"] then
-							return false
-						else  -- TOONNAME
-							return a["TOONNAME"] < b["TOONNAME"]
-						end
-					end,
+		if a["LEVEL"] > b["LEVEL"] then
+			return true
+		elseif a["LEVEL"] < b["LEVEL"] then
+			return false
+		else  -- TOONNAME
+			return a["TOONNAME"] < b["TOONNAME"]
+		end
+	end,
 	revRANKINDEX	=	function(a, b)
-						if a["RANKINDEX"] < b["RANKINDEX"] then
-							return true
-						elseif a["RANKINDEX"] > b["RANKINDEX"] then
-							return false
-						else -- TOONNAME
-							return a["TOONNAME"] < b["TOONNAME"]
-						end
-					end,
+		if a["RANKINDEX"] < b["RANKINDEX"] then
+			return true
+		elseif a["RANKINDEX"] > b["RANKINDEX"] then
+			return false
+		else -- TOONNAME
+			return a["TOONNAME"] < b["TOONNAME"]
+		end
+	end,
 	revZONENAME	=	function(a, b)
-						if a["ZONENAME"] > b["ZONENAME"] then
-							return true
-						elseif a["ZONENAME"] < b["ZONENAME"] then
-							return false
-						else -- TOONNAME
-							return a["TOONNAME"] < b["TOONNAME"]
-						end
-					end,
+		if a["ZONENAME"] > b["ZONENAME"] then
+			return true
+		elseif a["ZONENAME"] < b["ZONENAME"] then
+			return false
+		else -- TOONNAME
+			return a["TOONNAME"] < b["TOONNAME"]
+		end
+	end,
 	revREALMNAME	=	function(a, b)
-						if a["REALMNAME"] > b["REALMNAME"] then
-							return true
-						elseif a["REALMNAME"] < b["REALMNAME"] then
-							return false
-						else -- TOONNAME
-							return a["ZONENAME"] < b["ZONENAME"]
-						end
-					end
+		if a["REALMNAME"] > b["REALMNAME"] then
+			return true
+		elseif a["REALMNAME"] < b["REALMNAME"] then
+			return false
+		else -- TOONNAME
+			return a["ZONENAME"] < b["ZONENAME"]
+		end
+	end
 }
 
 -------------------------------------------------------------------------------
@@ -289,9 +289,9 @@ local function player_name_to_index(name)
 	local lookupname
 
 	for i = 1, C_FriendList.GetNumFriends() do
-		lookupname = GetFriendInfo(i)
+		local info = C_FriendList.GetFriendInfoByIndex(i)
 
-		if lookupname == name then
+		if info.name == name then
 			return i
 		end
 	end
@@ -324,12 +324,12 @@ FillLocalizedClassList(GGSocialState_classes_male, false)
 
 for token, localizedName in pairs(GGSocialState_classes_female) do
 	color = RAID_CLASS_COLORS[token]
-	GGSocialState_CLASS_COLORS[localizedName] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255) 
+	GGSocialState_CLASS_COLORS[localizedName] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
 end
 
 for token, localizedName in pairs(GGSocialState_classes_male) do
 	color = RAID_CLASS_COLORS[token]
-	GGSocialState_CLASS_COLORS[localizedName] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255) 
+	GGSocialState_CLASS_COLORS[localizedName] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
 end
 
 ---------------------
@@ -337,62 +337,62 @@ end
 ---------------------
 
 function update_Broker()
---	ShowFriends()
+	--	ShowFriends()
 
 	local displayline = ""
 
 	local NumFriends, online = C_FriendList.GetNumFriends(), C_FriendList.GetNumOnlineFriends()
 	local realidTotal, realidOnline = BNGetNumFriends()
-  
-  if not GGSocialStateDB.split_LDB_friends then
 
-    displayline = online + realidOnline
+	if not GGSocialStateDB.split_LDB_friends then
 
-    if not GGSocialStateDB.hide_LDB_totals then
-      displayline = displayline .. "/" .. NumFriends + realidTotal
-    end
+		displayline = online + realidOnline
 
-    if not GGSocialStateDB.hide_LDB_labels then
-      displayline = L["Friends"] .. " " .. displayline
-    end
-  
-  else
-  
-    -- RealID First
-    if not GGSocialStateDB.hide_LDB_labels then
-      displayline = displayline .. L["RealID"] .. " "
-    end
-    
-    displayline = displayline .. realidOnline
+		if not GGSocialStateDB.hide_LDB_totals then
+			displayline = displayline .. "/" .. NumFriends + realidTotal
+		end
 
-    if not GGSocialStateDB.hide_LDB_totals then
-      displayline = displayline .. "/" .. realidTotal
-    end
-    
-    -- Normal Friends Next
-    displayline = displayline .. "|r : |cffffff00"
-    
-    if not GGSocialStateDB.hide_LDB_labels then
-      displayline = displayline .. L["Friends"] .. " "
-    end
-    
-    displayline = displayline ..online
+		if not GGSocialStateDB.hide_LDB_labels then
+			displayline = L["Friends"] .. " " .. displayline
+		end
 
-    if not GGSocialStateDB.hide_LDB_totals then
-      displayline = displayline .. "/" .. NumFriends
-    end
-  
-  end
+	else
 
-  	if IsInGuild() then
+		-- RealID First
+		if not GGSocialStateDB.hide_LDB_labels then
+			displayline = displayline .. L["RealID"] .. " "
+		end
+
+		displayline = displayline .. realidOnline
+
+		if not GGSocialStateDB.hide_LDB_totals then
+			displayline = displayline .. "/" .. realidTotal
+		end
+
+		-- Normal Friends Next
+		displayline = displayline .. "|r : |cffffff00"
+
+		if not GGSocialStateDB.hide_LDB_labels then
+			displayline = displayline .. L["Friends"] .. " "
+		end
+
+		displayline = displayline ..online
+
+		if not GGSocialStateDB.hide_LDB_totals then
+			displayline = displayline .. "/" .. NumFriends
+		end
+
+	end
+
+	if IsInGuild() then
 		C_GuildInfo.GuildRoster()
 		local guildTotal, online = GetNumGuildMembers()
-			for i = 1, GetNumGuildMembers() do
-				local _, _, _, _, _, _, _, _, connected, _, _, _, _, isMobile = GetGuildRosterInfo(i)
-				if isMobile then
-					online = online + 1
-				end
+		for i = 1, GetNumGuildMembers() do
+			local _, _, _, _, _, _, _, _, connected, _, _, _, _, isMobile = GetGuildRosterInfo(i)
+			if isMobile then
+				online = online + 1
 			end
+		end
 
 		displayline = displayline .. "|r : |cff00ff00"
 		if not GGSocialStateDB.hide_LDB_labels then
@@ -450,9 +450,9 @@ local function Entry_OnMouseUp(frame, info, button)
 			end
 
 			if i_type == "friends" then
-				FriendsFrame.NotesID = player_name_to_index(toon_name)
- 				StaticPopup_Show("SET_FRIENDNOTE", GetFriendInfo(FriendsFrame.NotesID))
- 				return
+				local info = C_FriendList.GetFriendInfo(toon_name)
+				StaticPopup_Show("SET_FRIENDNOTE", info.notes)
+				return
 			end
 
 			if i_type == "realid" then
@@ -465,7 +465,7 @@ local function Entry_OnMouseUp(frame, info, button)
 		-- Send a tell to player
 		if i_type == "realid" then
 			local name = full_name..":"..presence_id
-			SetItemRef( "BNplayer:"..name, ("|HBNplayer:%1$s|h[%1$s]|h"):format(name), "LeftButton" )          
+			SetItemRef( "BNplayer:"..name, ("|HBNplayer:%1$s|h[%1$s]|h"):format(name), "LeftButton" )
 		else
 			SetItemRef( "player:"..full_name, ("|Hplayer:%1$s|h[%1$s]|h"):format(full_name), "LeftButton" )
 		end
@@ -522,6 +522,19 @@ function LDB:OnClick(button)
 
 	if button == "RightButton" then
 		LibStub("AceConfigDialog-3.0"):Open("GGSocialState")
+	end
+end
+
+function dump(o)
+	if type(o) == 'table' then
+		local s = "{\n"
+		for k,v in pairs(o) do
+			if type(k) ~= 'number' then k = '"'..k..'"' end
+			s = s .. '['..k..'] = ' .. dump(v) .. ",\n"
+		end
+		return s .. "}\n"
+	else
+		return tostring(o)
 	end
 end
 
@@ -602,12 +615,12 @@ function LDB.OnEnter(self)
 						local fcolor
 						local duplicate = false
 						local insert_account = true
-						local tableIndex = 0						
+						local tableIndex = 0
 						local status = ""
 						local note = ""
 
 						local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(i, gameAccountIndex)
-            
+
 						if gameAccountInfo then -- yeah
 							if gameAccountInfo.factionName then
 								if gameAccountInfo.factionName == "Horde" then
@@ -627,30 +640,48 @@ function LDB.OnEnter(self)
 
 							note = accountInfo.note
 							if note and note ~= "" then note = "|cffff8800{"..note.."}|r" end
-						
+
 							for _, player in ipairs(realid_table) do
 								tableIndex = tableIndex + 1
 								if player["GIVENNAME"] == accountInfo.accountName then
 									duplicate = true
 									break
 								end
-					
+
 								if player["SURNAME"] == accountInfo.battleTag then
 									duplicate = true
 									break
 								end
 							end
-							
+
 							-- Skip inserting into the table if the friend is playing WoW classic---the App instance will still show up
 							if (gameAccountInfo.wowProjectID) and (gameAccountInfo.wowProjectID == 2) then
 								insert_account = false
 							end
-						
+
 							if (duplicate) and (gameAccountInfo.clientProgram ~= "App") then
 								if (not realid_table[tableIndex]["TOONNAME"]) then
 									table.remove(realid_table, tableIndex)
-							
+
 									table.insert(realid_table, {
+										GIVENNAME = accountInfo.accountName,
+										SURNAME = accountInfo.battleTag or "",
+										LEVEL = gameAccountInfo.characterLevel or "",
+										CLASS = gameAccountInfo.className or "",
+										FCOLOR = fcolor or "",
+										STATUS = status,
+										BROADCAST_TEXT = accountInfo.customMessage or "",
+										TOONNAME = gameAccountInfo.characterName or "",
+										CLIENT = gameAccountInfo.clientProgram or "",
+										ZONENAME = gameAccountInfo.areaName or "",
+										REALMNAME = gameAccountInfo.realmName or "",
+										GAMETEXT = gameText or "",
+										NOTE = note,
+										PRESENCEID = accountInfo.bnetAccountID
+									})
+								end
+							elseif (not duplicate) and (insert_account) then
+								table.insert(realid_table, {
 									GIVENNAME = accountInfo.accountName,
 									SURNAME = accountInfo.battleTag or "",
 									LEVEL = gameAccountInfo.characterLevel or "",
@@ -665,24 +696,6 @@ function LDB.OnEnter(self)
 									GAMETEXT = gameText or "",
 									NOTE = note,
 									PRESENCEID = accountInfo.bnetAccountID
-									})
-								end
-							elseif (not duplicate) and (insert_account) then
-								table.insert(realid_table, {
-								GIVENNAME = accountInfo.accountName,
-								SURNAME = accountInfo.battleTag or "",
-								LEVEL = gameAccountInfo.characterLevel or "",
-								CLASS = gameAccountInfo.className or "",
-								FCOLOR = fcolor or "",
-								STATUS = status,
-								BROADCAST_TEXT = accountInfo.customMessage or "",
-								TOONNAME = gameAccountInfo.characterName or "",
-								CLIENT = gameAccountInfo.clientProgram or "",
-								ZONENAME = gameAccountInfo.areaName or "",
-								REALMNAME = gameAccountInfo.realmName or "",
-								GAMETEXT = gameText or "",
-								NOTE = note,
-								PRESENCEID = accountInfo.bnetAccountID
 								})
 							end
 						end
@@ -691,7 +704,6 @@ function LDB.OnEnter(self)
 
 				if (GGSocialStateDB["RealIDSort"] ~= "REALID") and (GGSocialStateDB["RealIDSort"] ~= "revREALID") then
 					table.sort(realid_table, list_sort[GGSocialStateDB["RealIDSort"]])
-
 				end
 
 				for _, player in ipairs(realid_table) do
@@ -707,7 +719,7 @@ function LDB.OnEnter(self)
 					line = tooltip:SetCell(line, 2, player["STATUS"])
 					line = tooltip:SetCell(line, 3,
 						string.format("|cff%s%s",GGSocialState_CLASS_COLORS[player["CLASS"]] or "B8B8B8", player["TOONNAME"] .. "|r")..
-						(inGroup(player["TOONNAME"]) and GROUP_CHECKMARK or ""))
+								(inGroup(player["TOONNAME"]) and GROUP_CHECKMARK or ""))
 					line = tooltip:SetCell(line, 4,
 						"|cff82c5ff" .. player["GIVENNAME"] .. "|r" .. broadcast_flag)
 
@@ -723,7 +735,7 @@ function LDB.OnEnter(self)
 						if player["CLIENT"] == "D3" then
 							line = tooltip:SetCell(line, 6, "|cff82c5ffDiablo 3|r")
 						end
-            
+
 						if player["CLIENT"] == "WTCG" then
 							line = tooltip:SetCell(line, 6, "|cff82c5ffHearthstone|r")
 						end
@@ -750,25 +762,27 @@ function LDB.OnEnter(self)
 			if numFriendsOnline > 0 then
 				local friend_table = {}
 				for i = 1,numFriendsOnline do
-					local toonName, level, class, zoneName, connected, status, note = GetFriendInfo(i)
+					local note, status
+					local info = C_FriendList.GetFriendInfoByIndex(i)
 
+					note = info.notes
 					note = note and "|cffff8800{"..note.."}|r" or ""
 
-					if status == CHAT_FLAG_AFK then
+					if info.afk == CHAT_FLAG_AFK then
 						status = AWAY_ICON
-					elseif status == CHAT_FLAG_DND then
+					elseif info.dnd == CHAT_FLAG_DND then
 						status = BUSY_ICON
 					end
 
 					table.insert(friend_table, {
-						TOONNAME = toonName,
-						LEVEL = level,
-						CLASS = class,
-						ZONENAME = zoneName,
+						TOONNAME = info.name,
+						LEVEL = info.level,
+						CLASS = info.className,
+						ZONENAME = info.area,
 						REALMNAME = "",
 						STATUS = status,
 						NOTE = note
-						})
+					})
 				end
 
 				if (GGSocialStateDB["RealIDSort"] ~= "REALID") and (GGSocialStateDB["RealIDSort"] ~= "revREALID") then
@@ -884,26 +898,26 @@ function LDB.OnEnter(self)
 						NOTE = note,
 						ONOTE = onote,
 						STATUS = status
-						})
+					})
 				end
 			end
 
 			table.sort(guild_table, list_sort[GGSocialStateDB["GuildSort"]])
 
 			for _, player in ipairs(guild_table) do
-					line = tooltip:AddLine()
-					line = tooltip:SetCell(line, 1, ColoredLevel(player["LEVEL"]))
-					line = tooltip:SetCell(line, 2, player["STATUS"])
-					line = tooltip:SetCell(line, 3,
-						string.format("|cff%s%s", GGSocialState_CLASS_COLORS[player["CLASS"]] or "ffffff", Ambiguate(player["TOONNAME"], "guild") .. "|r") .. (inGroup(Ambiguate(player["TOONNAME"], "guild")) and GROUP_CHECKMARK or ""))
-					line = tooltip:SetCell(line, 4, player["TOONALIAS"])
-					line = tooltip:SetCell(line, 5, player["ZONENAME"] or "???")
-					line = tooltip:SetCell(line, 6, player["RANK"])
-					if not GGSocialStateDB.hide_guild_onotes then
-						line = tooltip:SetCell(line, 7, player["NOTE"] .. player["ONOTE"])
-					end
+				line = tooltip:AddLine()
+				line = tooltip:SetCell(line, 1, ColoredLevel(player["LEVEL"]))
+				line = tooltip:SetCell(line, 2, player["STATUS"])
+				line = tooltip:SetCell(line, 3,
+					string.format("|cff%s%s", GGSocialState_CLASS_COLORS[player["CLASS"]] or "ffffff", Ambiguate(player["TOONNAME"], "guild") .. "|r") .. (inGroup(Ambiguate(player["TOONNAME"], "guild")) and GROUP_CHECKMARK or ""))
+				line = tooltip:SetCell(line, 4, player["TOONALIAS"])
+				line = tooltip:SetCell(line, 5, player["ZONENAME"] or "???")
+				line = tooltip:SetCell(line, 6, player["RANK"])
+				if not GGSocialStateDB.hide_guild_onotes then
+					line = tooltip:SetCell(line, 7, player["NOTE"] .. player["ONOTE"])
+				end
 
-					tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("guild:%s:%s", player["TOONNAME"], player["TOONNAME"]))
+				tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("guild:%s:%s", player["TOONNAME"], player["TOONNAME"]))
 			end
 		end
 		tooltip:AddLine(" ")
@@ -920,16 +934,16 @@ function LDB.OnEnter(self)
 
 		if not GGSocialStateDB.minimize_hintline then
 			line = tooltip:AddLine()
-			tooltip:SetCell(line, 1, "|cffeda55f"..L["Click"].."|r "..L["to open the friends panel."], "LEFT", 5) 
-			tooltip:SetCell(line, 6, "|cffeda55f"..L["Alt-Click"].."|r "..L["to open the guild panel."], "LEFT", 0) 
-			
+			tooltip:SetCell(line, 1, "|cffeda55f"..L["Click"].."|r "..L["to open the friends panel."], "LEFT", 5)
+			tooltip:SetCell(line, 6, "|cffeda55f"..L["Alt-Click"].."|r "..L["to open the guild panel."], "LEFT", 0)
+
 			line = tooltip:AddLine()
 			tooltip:SetCell(line, 1, "|cffeda55f"..L["Click"].."|r "..L["a line to whisper a player."], "LEFT", 5)
 			tooltip:SetCell(line, 6, "|cffeda55f"..L["Shift-Click"].."|r "..L["a line to lookup a player."], "LEFT", 0)
-			
+
 			line = tooltip:AddLine()
 			tooltip:SetCell(line, 1, "|cffeda55f"..L["Ctrl-Click"].."|r "..L["a line to edit a note."], "LEFT", 5)
-			tooltip:SetCell(line, 6, "|cffeda55f"..L["Ctrl-RightClick"].."|r "..L["a line to edit an officer note."], "LEFT", 0) 
+			tooltip:SetCell(line, 6, "|cffeda55f"..L["Ctrl-RightClick"].."|r "..L["a line to edit an officer note."], "LEFT", 0)
 
 			line = tooltip:AddLine()
 			tooltip:SetCell(line, 1, "|cffeda55f"..L["Alt-Click"].."|r "..L["a line to invite."], "LEFT", 5)
@@ -940,8 +954,8 @@ function LDB.OnEnter(self)
 		end
 	end
 
-		tooltip:UpdateScrolling()
-		tooltip:Show()
+	tooltip:UpdateScrolling()
+	tooltip:Show()
 end
 
 frame:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
