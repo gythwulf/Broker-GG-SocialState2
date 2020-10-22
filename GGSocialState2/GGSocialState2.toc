@@ -1,6 +1,6 @@
 ## Interface: 90001
-## Title: GGSocialState2
-## Version: 9.0.1-01
+## Title: Broker: GGSocialState2
+## Version: 9.0.1-03
 ## Notes: A friend/guild list viewer
 ## Author: Luzisto, gOOvER, Gythwulf
 ## SavedVariables: GGSocialStateDB

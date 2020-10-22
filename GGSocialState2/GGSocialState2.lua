@@ -28,14 +28,38 @@ local update_Broker
 --local MyRealm = GetRealmName()
 
 local GROUP_CHECKMARK	= "|TInterface\\Buttons\\UI-CheckBox-Check:0|t"
+local ONLINE_ICON       = "|T" .. _G.FRIENDS_TEXTURE_ONLINE .. ":18|t"
 local AWAY_ICON			= "|TInterface\\FriendsFrame\\StatusIcon-Away:18|t"
 local BUSY_ICON			= "|TInterface\\FriendsFrame\\StatusIcon-DnD:18|t"
 local MOBILE_ICON		= "|TInterface\\ChatFrame\\UI-ChatIcon-ArmoryChat:18|t"
 local MINIMIZE			= "|TInterface\\BUTTONS\\UI-PlusButton-Up:0|t"
 local BROADCAST_ICON 	= "|TInterface\\FriendsFrame\\BroadcastIcon:0|t"
 
+
 local FACTION_COLOR_HORDE = RED_FONT_COLOR_CODE
 local FACTION_COLOR_ALLIANCE = "|cff0070dd"
+
+local BNET_CLIENT = {}
+BNET_CLIENT["WoW"]  = "World of Warcraft"
+BNET_CLIENT["S2"]   = "StarCraft 2"
+BNET_CLIENT["D3"]   = "Diablo 3"
+BNET_CLIENT["WTCG"] = "Hearthstone"
+BNET_CLIENT["App"]  = "Battle.net Desktop App"
+BNET_CLIENT["BSAp"] = "Battle.net Mobile App"
+BNET_CLIENT["Hero"] = "Hero of the Storm"
+BNET_CLIENT["Pro"]  = "Overwatch"
+BNET_CLIENT["S1"]   = "Starcraft: Remastered"
+BNET_CLIENT["DST2"] = "Destiny 2"
+BNET_CLIENT["VIPR"] = "Call of Duty: Black Ops 4"
+BNET_CLIENT["ODIN"] = "Call of Duty: Modern Warfare"
+BNET_CLIENT["LAZR"] = "Call of Duty: Modern Warfare 2"
+BNET_CLIENT["W3"]   = "Warcraft III: Reforged"
+
+local CLIENT_ICON_SIZE = 18
+local CLIENT_ICON_TEXTURE_CODES = {}
+for client in pairs(BNET_CLIENT) do
+	CLIENT_ICON_TEXTURE_CODES[client] = _G.BNet_GetClientEmbeddedTexture(client, CLIENT_ICON_SIZE, CLIENT_ICON_SIZE)
+end
 
 -------------------------------------------------------------------------------
 -- Font definitions.
@@ -544,6 +568,87 @@ end
 
 function LDB.OnLeave() end
 
+function GetBNetFriends()
+	local friends = {}
+	local _, numBNOnline = BNGetNumFriends()
+
+	if (numBNOnline > 0) then
+		for i = 1, numBNOnline do
+			local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
+
+			local friend = {}
+			local accounts = {}
+			local status = ""
+			local broadcast_flag = ""
+			local note = accountInfo.note
+
+			-- Set broadcast_flag to a chat bubble icon if broadcast message is not being expanded
+			if not GGSocialStateDB.expand_realID and accountInfo.customMessage ~= "" then
+				broadcast_flag = " " .. BROADCAST_ICON
+			end
+
+			-- Set BNET account status
+			status = ONLINE_ICON
+			if accountInfo.isAFK then status = AWAY_ICON end
+			if accountInfo.isBusy then status = BUSY_ICON end
+			if accountInfo.isDND then status = BUSY_ICON end
+
+			-- Set note color
+			if note and note ~= "" then note = "|cffff8800" .. note .. "|r" end
+
+			friend["STATUS"] = status
+			friend["NOTE"] = note or ""
+			friend["GIVENNAME"] = "|cff82c5ff" .. accountInfo.accountName .."|r" .. broadcast_flag
+			friend["SURNAME"] = accountInfo.battleTag
+			friend["BROADCAST_TEXT"] = accountInfo.customMessage
+			friend["PRESENCEID"] = accountInfo.bnetAccountID
+
+			for gameAccountIndex = 1, C_BattleNet.GetFriendNumGameAccounts(i) do
+				local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(i, gameAccountIndex)
+				local client = gameAccountInfo.clientProgram
+
+				-- Set the name of the client program from BNET_CLIENT and change its color
+				gameAccountInfo.clientProgram = BNET_CLIENT[gameAccountInfo.clientProgram]
+
+				-- If WoW, update some variable formatting
+				if (client == "WoW") then
+					local name = gameAccountInfo.characterName
+					local presence = gameAccountInfo.richPresence
+					local realmName = gameAccountInfo.realmName
+
+					-- Make the color of characterName be the class color
+					local name = string.format("|cff%s%s",GGSocialState_CLASS_COLORS[gameAccountInfo.className] or "B8B8B8",
+						name .. "|r") ..
+							(inGroup(name) and GROUP_CHECKMARK or "")
+
+					if gameAccountInfo.areaName and gameAccountInfo.realmName then
+						-- Make the color of realmName be the faction color
+						if gameAccountInfo.factionName == "Horde" then
+							realmName = FACTION_COLOR_HORDE .. gameAccountInfo.realmName .. "|r"
+						else
+							realmName = FACTION_COLOR_ALLIANCE .. gameAccountInfo.realmName .. "|r"
+						end
+						presence = gameAccountInfo.areaName .. " - " .. gameAccountInfo.realmName .. "|r"
+					end
+
+					gameAccountInfo.characterName = name
+					gameAccountInfo.characterLevel = ColoredLevel(gameAccountInfo.characterLevel)
+					gameAccountInfo.richPresence = presence
+					gameAccountInfo.realmName = realmName
+				end
+
+				if accounts[client] == nil then accounts[client] = {} end
+				table.insert(accounts[client], gameAccountInfo)
+			end
+
+			friend["ACCOUNTS"] = accounts
+			friends[i] = friend
+		end
+	end
+
+	return friends
+end
+
 ------------------------
 --      Tooltip!      --
 ------------------------
@@ -607,97 +712,127 @@ function LDB.OnEnter(self)
 			tooltip:AddSeparator()
 
 			if numBNOnline > 0 then
+				local bnetFriends = GetBNetFriends()
 				local realid_table = {}
-				for i = 1, numBNOnline do
-					local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
+				for _, bnetFriend in pairs(bnetFriends) do
+					local displayApp = true
+					local displayBSAp = true
 
-					for gameAccountIndex = 1, C_BattleNet.GetFriendNumGameAccounts(i) do
-						local fcolor
-						local duplicate = false
-						local insert_account = true
-						local tableIndex = 0
-						local status = ""
-						local note = ""
+					local accounts = bnetFriend["ACCOUNTS"]
+					local wow = accounts["WoW"]; accounts["WoW"] = nil
+					local App = accounts["App"]; accounts["App"] = nil
+					local BSAp = accounts["BSAp"]; accounts["BSAp"] = nil
 
-						local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(i, gameAccountIndex)
+					-- Do not display account info that does not exist
+					if App == nil then displayApp = false end
+					if BSAp == nil then displayBSAp = false end
 
-						if gameAccountInfo then -- yeah
-							if gameAccountInfo.factionName then
-								if gameAccountInfo.factionName == "Horde" then
-									fcolor = FACTION_COLOR_HORDE
-								else
-									fcolor = FACTION_COLOR_ALLIANCE
-								end
-							end
+					-- The desktop app (App) is higher priority than the mobile app (MSAp)
+					-- Do not display mobile app information if the desktop app is listed
+					if App then displayBSAp = false end
 
-							if accountInfo.isAFK then
-								status = AWAY_ICON
-							end
-
-							if accountInfo.isBusy then
-								status = BUSY_ICON
-							end
-
-							note = accountInfo.note
-							if note and note ~= "" then note = "|cffff8800{"..note.."}|r" end
-
-							for _, player in ipairs(realid_table) do
-								tableIndex = tableIndex + 1
-								if player["GIVENNAME"] == accountInfo.accountName then
-									duplicate = true
-									break
-								end
-
-								if player["SURNAME"] == accountInfo.battleTag then
-									duplicate = true
-									break
-								end
-							end
-
-							-- Skip inserting into the table if the friend is playing WoW classic---the App instance will still show up
-							if (gameAccountInfo.wowProjectID) and (gameAccountInfo.wowProjectID == 2) then
-								insert_account = false
-							end
-
-							if (duplicate) and (gameAccountInfo.clientProgram ~= "App") then
-								if (not realid_table[tableIndex]["TOONNAME"]) then
-									table.remove(realid_table, tableIndex)
-
-									table.insert(realid_table, {
-										GIVENNAME = accountInfo.accountName,
-										SURNAME = accountInfo.battleTag or "",
-										LEVEL = gameAccountInfo.characterLevel or "",
-										CLASS = gameAccountInfo.className or "",
-										FCOLOR = fcolor or "",
-										STATUS = status,
-										BROADCAST_TEXT = accountInfo.customMessage or "",
-										TOONNAME = gameAccountInfo.characterName or "",
-										CLIENT = gameAccountInfo.clientProgram or "",
-										ZONENAME = gameAccountInfo.areaName or "",
-										REALMNAME = gameAccountInfo.realmName or "",
-										GAMETEXT = gameText or "",
-										NOTE = note,
-										PRESENCEID = accountInfo.bnetAccountID
-									})
-								end
-							elseif (not duplicate) and (insert_account) then
+					local temp = {}
+					if wow then -- If there are WoW apps open, display them
+						displayApp = false
+						displayBSAp = false
+						for _, client in pairs(wow) do
+							if client.wowProjectID == 1 then -- WoW Retail
 								table.insert(realid_table, {
-									GIVENNAME = accountInfo.accountName,
-									SURNAME = accountInfo.battleTag or "",
-									LEVEL = gameAccountInfo.characterLevel or "",
-									CLASS = gameAccountInfo.className or "",
-									FCOLOR = fcolor or "",
-									STATUS = status,
-									BROADCAST_TEXT = accountInfo.customMessage or "",
-									TOONNAME = gameAccountInfo.characterName or "",
-									CLIENT = gameAccountInfo.clientProgram or "",
-									ZONENAME = gameAccountInfo.areaName or "",
-									REALMNAME = gameAccountInfo.realmName or "",
-									GAMETEXT = gameText or "",
-									NOTE = note,
-									PRESENCEID = accountInfo.bnetAccountID
+									GIVENNAME = bnetFriend["GIVENNAME"],
+									SURNAME = bnetFriend["SURNAME"],
+									LEVEL = client.characterLevel,
+									CLASS = client.className,
+									STATUS = bnetFriend["STATUS"],
+									BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
+									TOONNAME = client.characterName,
+									CLIENT = client.clientProgram,
+									ZONENAME = client.areaName or "",
+									REALMNAME = client.realmName or "",
+									GAMETEXT = client.richPresence,
+									NOTE = bnetFriend["NOTE"],
+									PRESENCEID = bnetFriend["PRESENCEID"]
+								})
+							else -- WoW Classic
+								table.insert(realid_table, {
+									GIVENNAME = bnetFriend["GIVENNAME"],
+									SURNAME = bnetFriend["SURNAME"],
+									LEVEL = client.characterLevel,
+									CLASS = client.className,
+									STATUS = bnetFriend["STATUS"],
+									BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
+									TOONNAME = client.characterName,
+									CLIENT = client.clientProgram,
+									ZONENAME = client.areaName or "",
+									REALMNAME = "WoW Classic",
+									GAMETEXT = client.richPresence,
+									NOTE = bnetFriend["NOTE"],
+									PRESENCEID = bnetFriend["PRESENCEID"]
 								})
 							end
+						end
+					else -- Otherwise display details for other applications, other than App and BSAp
+						for k, v in pairs(accounts) do
+							if v then
+								displayApp = false
+								displayBSAp = false
+								for _, client in pairs(v) do
+									table.insert(realid_table, {
+										GIVENNAME = bnetFriend["GIVENNAME"],
+										SURNAME = bnetFriend["SURNAME"],
+										LEVEL = CLIENT_ICON_TEXTURE_CODES[k],
+										CLASS = "",
+										STATUS = bnetFriend["STATUS"],
+										BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
+										TOONNAME = "",
+										CLIENT = client.clientProgram,
+										ZONENAME = client.richPresence,
+										REALMNAME = "",
+										GAMETEXT = client.richPresence,
+										NOTE = bnetFriend["NOTE"],
+										PRESENCEID = bnetFriend["PRESENCEID"]
+									})
+								end
+							end
+						end
+					end
+
+					-- Display App and BSAp if their display was not disabled at this point
+					if displayApp then
+						for _, client in pairs(App) do
+							table.insert(realid_table, {
+								GIVENNAME = bnetFriend["GIVENNAME"],
+								SURNAME = bnetFriend["SURNAME"],
+								LEVEL = CLIENT_ICON_TEXTURE_CODES["App"],
+								CLASS = "",
+								STATUS = bnetFriend["STATUS"],
+								BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
+								TOONNAME = "",
+								CLIENT = client.clientProgram,
+								ZONENAME = client.richPresence,
+								REALMNAME = "",
+								GAMETEXT = client.richPresence,
+								NOTE = bnetFriend["NOTE"],
+								PRESENCEID = bnetFriend["PRESENCEID"]
+							})
+						end
+					end
+					if displayBSAp then
+						for _, client in pairs(BSAp) do
+							table.insert(realid_table, {
+								GIVENNAME = bnetFriend["GIVENNAME"],
+								SURNAME = bnetFriend["SURNAME"],
+								LEVEL = CLIENT_ICON_TEXTURE_CODES["BSAp"],
+								CLASS = "",
+								STATUS = bnetFriend["STATUS"],
+								BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
+								TOONNAME = "",
+								CLIENT = client.clientProgram,
+								ZONENAME = client.richPresence,
+								REALMNAME = "",
+								GAMETEXT = client.richPresence,
+								NOTE = bnetFriend["NOTE"],
+								PRESENCEID = bnetFriend["PRESENCEID"]
+							})
 						end
 					end
 				end
@@ -707,53 +842,27 @@ function LDB.OnEnter(self)
 				end
 
 				for _, player in ipairs(realid_table) do
-					local broadcast_flag
-					if not GGSocialStateDB.expand_realID and player["BROADCAST_TEXT"] ~= "" then
-						broadcast_flag = " " .. BROADCAST_ICON
-					else
-						broadcast_flag = ""
-					end
-
 					line = tooltip:AddLine()
-					line = tooltip:SetCell(line, 1, ColoredLevel(player["LEVEL"]))
+					line = tooltip:SetCell(line, 1, player["LEVEL"])
 					line = tooltip:SetCell(line, 2, player["STATUS"])
-					line = tooltip:SetCell(line, 3,
-						string.format("|cff%s%s",GGSocialState_CLASS_COLORS[player["CLASS"]] or "B8B8B8", player["TOONNAME"] .. "|r")..
-								(inGroup(player["TOONNAME"]) and GROUP_CHECKMARK or ""))
-					line = tooltip:SetCell(line, 4,
-						"|cff82c5ff" .. player["GIVENNAME"] .. "|r" .. broadcast_flag)
-
-					if player["CLIENT"] == "WoW" then
-						line = tooltip:SetCell(line, 5, player["ZONENAME"])
-						line = tooltip:SetCell(line, 6, player["FCOLOR"] .. player["REALMNAME"] .. "|r")
-					else
-						line = tooltip:SetCell(line, 5, player["GAMETEXT"])
-						if player["CLIENT"] == "S2" then
-							line = tooltip:SetCell(line, 6, "|cff82c5ffStarCraft 2|r")
-						end
-
-						if player["CLIENT"] == "D3" then
-							line = tooltip:SetCell(line, 6, "|cff82c5ffDiablo 3|r")
-						end
-
-						if player["CLIENT"] == "WTCG" then
-							line = tooltip:SetCell(line, 6, "|cff82c5ffHearthstone|r")
-						end
-						if player["CLIENT"] == "Hero" then
-							line = tooltip:SetCell(line, 6, "|cff82c5ffHeroes of the Storm|r")
-						end
-					end
+					line = tooltip:SetCell(line, 3, player["TOONNAME"])
+					line = tooltip:SetCell(line, 4, player["GIVENNAME"])
+					line = tooltip:SetCell(line, 5, player["ZONENAME"])
+					line = tooltip:SetCell(line, 6, player["REALMNAME"])
 
 					if not GGSocialStateDB.hide_friend_notes then
 						line = tooltip:SetCell(line, 7, player["NOTE"])
 					end
 
-					tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("realid:%s:%s:%d:%s:%s", player["TOONNAME"], player["GIVENNAME"], player["PRESENCEID"], player["CLIENT"], player["REALMNAME"]))
+					tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("realid:%s:%s:%d:%s:%s",
+						player["TOONNAME"], player["GIVENNAME"], player["PRESENCEID"], player["CLIENT"], player["REALMNAME"]))
 
 					if GGSocialStateDB.expand_realID and player["BROADCAST_TEXT"] ~= "" then
 						line = tooltip:AddLine()
-						line = tooltip:SetCell(line, 1, BROADCAST_ICON .. " |cff7b8489" .. player["BROADCAST_TEXT"] .. "|r", "LEFT", 0)
-						tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("realid:%s:%s:%d:%s:%s", player["TOONNAME"], player["GIVENNAME"], player["PRESENCEID"], player["CLIENT"], player["REALMNAME"]))
+						line = tooltip:SetCell(line, 1, BROADCAST_ICON .. " " .. player["BROADCAST_TEXT"], "LEFT", 0)
+						tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp,
+							string.format("realid:%s:%s:%d:%s:%s",
+								player["TOONNAME"], player["GIVENNAME"], player["PRESENCEID"], player["CLIENT"], player["REALMNAME"]))
 					end
 				end
 				tooltip:AddLine(" ")
