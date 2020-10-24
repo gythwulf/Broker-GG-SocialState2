@@ -597,13 +597,17 @@ function GetBNetFriends()
 			local status = ONLINE_ICON
 			local inApp, inBSAp
 			local appBusy, appAFK, BSApBusy, BSApAFK
-			local broadcast_flag = ""
+			local broadcastFlag = ""
 			local note = accountInfo.note
 			local accountName = accountInfo.accountName
 
-			-- Set broadcast_flag to a chat bubble icon if broadcast message is not being expanded
-			if not GGSocialStateDB.expand_realID and accountInfo.customMessage ~= "" then
-				broadcast_flag = " " .. BROADCAST_ICON
+			if accountInfo.customMessage ~= "" then
+				-- Set broadcastFlag to a chat bubble icon if broadcast message is not being expanded
+				if not GGSocialStateDB.expand_realID then
+					broadcastFlag = " " .. BROADCAST_ICON
+				end
+				accountInfo.customMessage = "|cff7b8489" .. accountInfo.customMessage .. " (" ..
+						_G.SecondsToTime(time() - accountInfo.customMessageTime, false, true, 1) .. " Ago)|r"
 			end
 
 			-- Set initial BNET account status
@@ -614,11 +618,12 @@ function GetBNetFriends()
 			-- Set note color
 			if note and note ~= "" then note = "|cffff8800" .. note .. "|r" end
 
-			accountInfo.accountName = "|cff82c5ff" .. accountName .."|r" .. broadcast_flag
+			accountInfo.accountName = "|cff82c5ff" .. accountName .."|r" .. broadcastFlag
 
 			for gameAccountIndex = 1, C_BattleNet.GetFriendNumGameAccounts(i) do
 				local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(i, gameAccountIndex)
 				local client = gameAccountInfo.clientProgram
+				local zoneName = gameAccountInfo.areaName
 				local temp = {}
 
 				-- Set the name of the client program from BNET_CLIENT and change its color
@@ -651,6 +656,16 @@ function GetBNetFriends()
 					gameAccountInfo.realmName = realmName
 				end
 
+				if not zoneName or zoneName == "" then
+					if not gameAccountInfo.richPresence or gameAccountInfo.richPresence == "" then
+						if client == "App" then
+							zoneName = "In App"
+						elseif client == "BSAp" then
+							zoneName = "Mobile"
+						end
+					end
+				end
+
 				temp = {
 					GIVENNAME = accountInfo.accountName,
 					ACCTNAME = accountName,
@@ -660,7 +675,7 @@ function GetBNetFriends()
 					TOONNAME = gameAccountInfo.characterName or "",
 					LEVEL = gameAccountInfo.characterLevel or "",
 					CLASS = gameAccountInfo.className or "",
-					ZONENAME = gameAccountInfo.areaName or gameAccountInfo.richPresence or "",
+					ZONENAME = zoneName or gameAccountInfo.richPresence or "",
 					REALMNAME = gameAccountInfo.realmName or "",
 					STATUS = "",
 					CLIENTICON = CLIENT_ICON_TEXTURE_CODES[client],
