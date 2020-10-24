@@ -80,6 +80,12 @@ ssRegFont:SetTextColor(1,0.823529,0)
 ssRegFont:SetFont(GameTooltipText:GetFont(), 12)
 
 local list_sort = {
+	CLIENTICON  =   function(a, b)
+		return a["CLIENTICON"] < b["CLIENTICON"]
+	end,
+	STATUS      =   function(a, b)
+		return a["STATUS"] < b["STATUS"]
+	end,
 	TOONNAME	=	function(a, b)
 		return a["TOONNAME"] < b["TOONNAME"]
 	end,
@@ -119,7 +125,13 @@ local list_sort = {
 			return a["ZONENAME"] < b["ZONENAME"]
 		end
 	end,
-	revTOONNAME	=	function(a, b)
+	revCLIENTICON   =   function(a, b)
+		return a["CLIENTICON"] > b["CLIENTICON"]
+	end,
+	revSTATUS       =   function(a, b)
+		return a["STATUS"] > b["STATUS"]
+	end,
+	revTOONNAME	    =   function(a, b)
 		return a["TOONNAME"] > b["TOONNAME"]
 	end,
 	revLEVEL		=	function(a, b)
@@ -334,13 +346,14 @@ local function guild_name_to_index(name)
 end
 
 local function ColoredLevel(level)
-	if level ~= "" then
-		local color = GetQuestDifficultyColor(level)
-		return string.format("|cff%02x%02x%02x%d|r", color.r * 255, color.g * 255, color.b * 255, level)
+	if type(level) ~= "number" then
+		return level
 	end
+	local color = _G.GetRelativeDifficultyColor(_G.UnitLevel("player"), level)
+	return ("|cff%02x%02x%02x%d|r"):format(color.r * 255, color.g * 255, color.b * 255, level)
 end
 
-GGSocialState_CLASS_COLORS, color = {}
+GGSocialState_CLASS_COLORS, color = {}, {}
 GGSocialState_classes_female, GGSocialState_classes_male = {}, {}
 
 FillLocalizedClassList(GGSocialState_classes_female, true)
@@ -568,6 +581,11 @@ end
 
 function LDB.OnLeave() end
 
+
+---------------------
+--  Get BNet List  --
+---------------------
+
 function GetBNetFriends()
 	local friends = {}
 	local _, numBNOnline = BNGetNumFriends()
@@ -575,37 +593,34 @@ function GetBNetFriends()
 	if (numBNOnline > 0) then
 		for i = 1, numBNOnline do
 			local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
-
-			local friend = {}
-			local accounts = {}
-			local status = ""
+			local primary, secondary = {}, {}
+			local status = ONLINE_ICON
+			local inApp, inBSAp
+			local appBusy, appAFK, BSApBusy, BSApAFK
 			local broadcast_flag = ""
 			local note = accountInfo.note
+			local accountName = accountInfo.accountName
 
 			-- Set broadcast_flag to a chat bubble icon if broadcast message is not being expanded
 			if not GGSocialStateDB.expand_realID and accountInfo.customMessage ~= "" then
 				broadcast_flag = " " .. BROADCAST_ICON
 			end
 
-			-- Set BNET account status
-			status = ONLINE_ICON
+			-- Set initial BNET account status
+			if accountInfo.isDND then status = BUSY_ICON end
 			if accountInfo.isAFK then status = AWAY_ICON end
 			if accountInfo.isBusy then status = BUSY_ICON end
-			if accountInfo.isDND then status = BUSY_ICON end
 
 			-- Set note color
 			if note and note ~= "" then note = "|cffff8800" .. note .. "|r" end
 
-			friend["STATUS"] = status
-			friend["NOTE"] = note or ""
-			friend["GIVENNAME"] = "|cff82c5ff" .. accountInfo.accountName .."|r" .. broadcast_flag
-			friend["SURNAME"] = accountInfo.battleTag
-			friend["BROADCAST_TEXT"] = accountInfo.customMessage
-			friend["PRESENCEID"] = accountInfo.bnetAccountID
+			accountInfo.accountName = "|cff82c5ff" .. accountName .."|r" .. broadcast_flag
 
 			for gameAccountIndex = 1, C_BattleNet.GetFriendNumGameAccounts(i) do
 				local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(i, gameAccountIndex)
 				local client = gameAccountInfo.clientProgram
+				local wowClassic = ""
+				local temp = {}
 
 				-- Set the name of the client program from BNET_CLIENT and change its color
 				gameAccountInfo.clientProgram = BNET_CLIENT[gameAccountInfo.clientProgram]
@@ -616,6 +631,10 @@ function GetBNetFriends()
 					local presence = gameAccountInfo.richPresence
 					local realmName = gameAccountInfo.realmName
 
+					if gameAccountInfo.wowProjectID == 2 then
+						wowClassic = " (Classic)"
+					end
+
 					-- Make the color of characterName be the class color
 					local name = string.format("|cff%s%s",GGSocialState_CLASS_COLORS[gameAccountInfo.className] or "B8B8B8",
 						name .. "|r") ..
@@ -624,9 +643,9 @@ function GetBNetFriends()
 					if gameAccountInfo.areaName and gameAccountInfo.realmName then
 						-- Make the color of realmName be the faction color
 						if gameAccountInfo.factionName == "Horde" then
-							realmName = FACTION_COLOR_HORDE .. gameAccountInfo.realmName .. "|r"
+							realmName = FACTION_COLOR_HORDE .. gameAccountInfo.realmName .. "|r" .. wowClassic
 						else
-							realmName = FACTION_COLOR_ALLIANCE .. gameAccountInfo.realmName .. "|r"
+							realmName = FACTION_COLOR_ALLIANCE .. gameAccountInfo.realmName .. "|r" .. wowClassic
 						end
 						presence = gameAccountInfo.areaName .. " - " .. gameAccountInfo.realmName .. "|r"
 					end
@@ -637,15 +656,69 @@ function GetBNetFriends()
 					gameAccountInfo.realmName = realmName
 				end
 
-				if accounts[client] == nil then accounts[client] = {} end
-				table.insert(accounts[client], gameAccountInfo)
+				temp = {
+					GIVENNAME = accountInfo.accountName,
+					ACCTNAME = accountName,
+					BROADCAST_TEXT = accountInfo.customMessage,
+					SURNAME = accountInfo.battleTag,
+					PRESENCEID = accountInfo.bnetAccountID,
+					TOONNAME = gameAccountInfo.characterName or "",
+					LEVEL = gameAccountInfo.characterLevel or "",
+					CLASS = gameAccountInfo.className or "",
+					ZONENAME = gameAccountInfo.areaName or gameAccountInfo.richPresence or "",
+					REALMNAME = gameAccountInfo.realmName or "",
+					STATUS = "",
+					CLIENTICON = CLIENT_ICON_TEXTURE_CODES[client],
+					CLIENT = gameAccountInfo.clientProgram,
+					CLIENTRAW = client,
+					GAMETEXT = gameAccountInfo.richPresence,
+					NOTE = note,
+				}
+
+				if (client == "App" or client == "BSAp") then
+					if (client == "App") then
+						inApp = true
+						appAFK = gameAccountInfo.isGameAFK
+						appBusy = gameAccountInfo.isGameBusy
+					end
+
+					if (client == "BSAp") then
+						inBSAp = true
+						BSApAFK = gameAccountInfo.isGameAFK
+						BSApBusy = gameAccountInfo.isGameBusy
+					end
+
+					table.insert(secondary, temp)
+				else
+					table.insert(primary, temp)
+				end
 			end
 
-			friend["ACCOUNTS"] = accounts
-			friends[i] = friend
+			-- Apply appropriate status if away in App or BSAp
+			if (not inApp or appAFK) and (not inBSAp or BSApAFK) then
+				status = AWAY_ICON
+			end
+			if (not inApp or appBusy) and (not inBSAp or BSApBusy) then
+				status = BUSY_ICON
+			end
+
+			local skipSecondary = false
+			for _, account in pairs(primary) do
+				skipSecondary = true
+				account["STATUS"] = status
+				table.insert(friends, account)
+			end
+
+			if not skipSecondary then
+				for _, account in pairs(secondary) do
+					if (account["CLIENTRAW"] == "BSAp" and not inApp) or (account["CLIENTRAW"] == "App") then
+						account["STATUS"] = status
+						table.insert(friends, account)
+					end
+				end
+			end
 		end
 	end
-
 	return friends
 end
 
@@ -659,7 +732,7 @@ function LDB.OnEnter(self)
 	if LibQTip:IsAcquired("GGSocialState") then
 		tooltip:Clear()
 	else
-		tooltip = LibQTip:Acquire("GGSocialState", 8, "RIGHT", "RIGHT", "LEFT", "LEFT", "CENTER", "CENTER", "RIGHT")
+		tooltip = LibQTip:Acquire("GGSocialState", 9, "CENTER", "LEFT", "RIGHT", "LEFT", "LEFT", "CENTER", "CENTER", "RIGHT")
 
 		tooltip:SetBackdropColor(0,0,0,1)
 
@@ -671,7 +744,7 @@ function LDB.OnEnter(self)
 	end
 
 	local line = tooltip:AddLine()
-	tooltip:SetCell(line, 1, "GGSocialState", ssTitleFont, "CENTER", 0)
+	tooltip:SetCell(line, 1, "GGSocialState2", ssTitleFont, "CENTER", 0)
 	tooltip:AddLine(" ")
 
 	-------------------------
@@ -693,176 +766,58 @@ function LDB.OnEnter(self)
 		if not GGSocialStateDB.hide_friendsection then
 			line = tooltip:AddHeader()
 			line = tooltip:SetCell(line, 1, "  ")
-			tooltip:SetCellScript(line, 1, "OnMouseUp", SetRealIDSort, "LEVEL")
-			line = tooltip:SetCell(line, 3, _G.NAME)
-			tooltip:SetCellScript(line, 3, "OnMouseUp", SetRealIDSort, "TOONNAME")
-			line = tooltip:SetCell(line, 4, _G.BATTLENET_FRIEND)
-			tooltip:SetCellScript(line, 4, "OnMouseUp", SetRealIDSort, "REALID")
-			line = tooltip:SetCell(line, 5, _G.LOCATION_COLON)
-			tooltip:SetCellScript(line, 5, "OnMouseUp", SetRealIDSort, "ZONENAME")
-			line = tooltip:SetCell(line, 6, _G.FRIENDS_LIST_REALM)
-			tooltip:SetCellScript(line, 6, "OnMouseUp", SetRealIDSort, "REALMNAME")
+			tooltip:SetCellScript(line, 1, "OnMouseUp", SetRealIDSort, "CLIENTICON")
+			line = tooltip:SetCell(line, 2, _G.BATTLENET_FRIEND)
+			tooltip:SetCellScript(line, 2, "OnMouseUp", SetRealIDSort, "REALID")
+			line = tooltip:SetCell(line, 3, "  ")
+			tooltip:SetCellScript(line, 3, "OnMouseUp", SetRealIDSort, "STATUS")
+			line = tooltip:SetCell(line, 4, _G.NAME)
+			tooltip:SetCellScript(line, 4, "OnMouseUp", SetRealIDSort, "TOONNAME")
+			line = tooltip:SetCell(line, 5, "  ")
+			tooltip:SetCellScript(line, 5, "OnMouseUp", SetRealIDSort, "LEVEL")
+			line = tooltip:SetCell(line, 6, _G.LOCATION_COLON)
+			tooltip:SetCellScript(line, 6, "OnMouseUp", SetRealIDSort, "ZONENAME")
+			line = tooltip:SetCell(line, 7, _G.FRIENDS_LIST_REALM)
+			tooltip:SetCellScript(line, 7, "OnMouseUp", SetRealIDSort, "REALMNAME")
 			if not GGSocialStateDB.hide_friend_notes then
-				line = tooltip:SetCell(line, 7, _G.NOTE_COLON)
+				line = tooltip:SetCell(line, 8, _G.NOTE_COLON)
 			else
-				line = tooltip:SetCell(line, 7, MINIMIZE .. _G.NOTE_COLON)
+				line = tooltip:SetCell(line, 8, MINIMIZE .. _G.NOTE_COLON)
 			end
-			tooltip:SetCellScript(line, 7, "OnMouseUp", HideOnMouseUp, "hide_friend_notes")
+			tooltip:SetCellScript(line, 8, "OnMouseUp", HideOnMouseUp, "hide_friend_notes")
 
 			tooltip:AddSeparator()
 
 			if numBNOnline > 0 then
-				local bnetFriends = GetBNetFriends()
-				local realid_table = {}
-				for _, bnetFriend in pairs(bnetFriends) do
-					local displayApp = true
-					local displayBSAp = true
-
-					local accounts = bnetFriend["ACCOUNTS"]
-					local wow = accounts["WoW"]; accounts["WoW"] = nil
-					local App = accounts["App"]; accounts["App"] = nil
-					local BSAp = accounts["BSAp"]; accounts["BSAp"] = nil
-
-					-- Do not display account info that does not exist
-					if App == nil then displayApp = false end
-					if BSAp == nil then displayBSAp = false end
-
-					-- The desktop app (App) is higher priority than the mobile app (MSAp)
-					-- Do not display mobile app information if the desktop app is listed
-					if App then displayBSAp = false end
-
-					local temp = {}
-					if wow then -- If there are WoW apps open, display them
-						displayApp = false
-						displayBSAp = false
-						for _, client in pairs(wow) do
-							if client.wowProjectID == 1 then -- WoW Retail
-								table.insert(realid_table, {
-									GIVENNAME = bnetFriend["GIVENNAME"],
-									SURNAME = bnetFriend["SURNAME"],
-									LEVEL = client.characterLevel,
-									CLASS = client.className,
-									STATUS = bnetFriend["STATUS"],
-									BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
-									TOONNAME = client.characterName,
-									CLIENT = client.clientProgram,
-									ZONENAME = client.areaName or "",
-									REALMNAME = client.realmName or "",
-									GAMETEXT = client.richPresence,
-									NOTE = bnetFriend["NOTE"],
-									PRESENCEID = bnetFriend["PRESENCEID"]
-								})
-							else -- WoW Classic
-								table.insert(realid_table, {
-									GIVENNAME = bnetFriend["GIVENNAME"],
-									SURNAME = bnetFriend["SURNAME"],
-									LEVEL = client.characterLevel,
-									CLASS = client.className,
-									STATUS = bnetFriend["STATUS"],
-									BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
-									TOONNAME = client.characterName,
-									CLIENT = client.clientProgram,
-									ZONENAME = client.areaName or "",
-									REALMNAME = "WoW Classic",
-									GAMETEXT = client.richPresence,
-									NOTE = bnetFriend["NOTE"],
-									PRESENCEID = bnetFriend["PRESENCEID"]
-								})
-							end
-						end
-					else -- Otherwise display details for other applications, other than App and BSAp
-						for k, v in pairs(accounts) do
-							if v then
-								displayApp = false
-								displayBSAp = false
-								for _, client in pairs(v) do
-									table.insert(realid_table, {
-										GIVENNAME = bnetFriend["GIVENNAME"],
-										SURNAME = bnetFriend["SURNAME"],
-										LEVEL = CLIENT_ICON_TEXTURE_CODES[k],
-										CLASS = "",
-										STATUS = bnetFriend["STATUS"],
-										BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
-										TOONNAME = "",
-										CLIENT = client.clientProgram,
-										ZONENAME = client.richPresence,
-										REALMNAME = "",
-										GAMETEXT = client.richPresence,
-										NOTE = bnetFriend["NOTE"],
-										PRESENCEID = bnetFriend["PRESENCEID"]
-									})
-								end
-							end
-						end
-					end
-
-					-- Display App and BSAp if their display was not disabled at this point
-					if displayApp then
-						for _, client in pairs(App) do
-							table.insert(realid_table, {
-								GIVENNAME = bnetFriend["GIVENNAME"],
-								SURNAME = bnetFriend["SURNAME"],
-								LEVEL = CLIENT_ICON_TEXTURE_CODES["App"],
-								CLASS = "",
-								STATUS = bnetFriend["STATUS"],
-								BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
-								TOONNAME = "",
-								CLIENT = client.clientProgram,
-								ZONENAME = client.richPresence,
-								REALMNAME = "",
-								GAMETEXT = client.richPresence,
-								NOTE = bnetFriend["NOTE"],
-								PRESENCEID = bnetFriend["PRESENCEID"]
-							})
-						end
-					end
-					if displayBSAp then
-						for _, client in pairs(BSAp) do
-							table.insert(realid_table, {
-								GIVENNAME = bnetFriend["GIVENNAME"],
-								SURNAME = bnetFriend["SURNAME"],
-								LEVEL = CLIENT_ICON_TEXTURE_CODES["BSAp"],
-								CLASS = "",
-								STATUS = bnetFriend["STATUS"],
-								BROADCAST_TEXT = bnetFriend["BROADCAST_TEXT"],
-								TOONNAME = "",
-								CLIENT = client.clientProgram,
-								ZONENAME = client.richPresence,
-								REALMNAME = "",
-								GAMETEXT = client.richPresence,
-								NOTE = bnetFriend["NOTE"],
-								PRESENCEID = bnetFriend["PRESENCEID"]
-							})
-						end
-					end
-				end
+				local realid_table = GetBNetFriends()
 
 				if (GGSocialStateDB["RealIDSort"] ~= "REALID") and (GGSocialStateDB["RealIDSort"] ~= "revREALID") then
 					table.sort(realid_table, list_sort[GGSocialStateDB["RealIDSort"]])
 				end
 
-				for _, player in ipairs(realid_table) do
+				for _, player in pairs(realid_table) do
 					line = tooltip:AddLine()
-					line = tooltip:SetCell(line, 1, player["LEVEL"])
-					line = tooltip:SetCell(line, 2, player["STATUS"])
-					line = tooltip:SetCell(line, 3, player["TOONNAME"])
-					line = tooltip:SetCell(line, 4, player["GIVENNAME"])
-					line = tooltip:SetCell(line, 5, player["ZONENAME"])
-					line = tooltip:SetCell(line, 6, player["REALMNAME"])
+					line = tooltip:SetCell(line, 1, player["CLIENTICON"])
+					line = tooltip:SetCell(line, 2, player["GIVENNAME"])
+					line = tooltip:SetCell(line, 3, player["STATUS"])
+					line = tooltip:SetCell(line, 4, player["TOONNAME"])
+					line = tooltip:SetCell(line, 5, player["LEVEL"])
+					line = tooltip:SetCell(line, 6, player["ZONENAME"])
+					line = tooltip:SetCell(line, 7, player["REALMNAME"])
 
 					if not GGSocialStateDB.hide_friend_notes then
-						line = tooltip:SetCell(line, 7, player["NOTE"])
+						line = tooltip:SetCell(line, 8, player["NOTE"])
 					end
 
 					tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("realid:%s:%s:%d:%s:%s",
-						player["TOONNAME"], player["GIVENNAME"], player["PRESENCEID"], player["CLIENT"], player["REALMNAME"]))
+						player["TOONNAME"], player["ACCTNAME"], player["PRESENCEID"], player["CLIENTRAW"], player["REALMNAME"]))
 
 					if GGSocialStateDB.expand_realID and player["BROADCAST_TEXT"] ~= "" then
 						line = tooltip:AddLine()
 						line = tooltip:SetCell(line, 1, BROADCAST_ICON .. " " .. player["BROADCAST_TEXT"], "LEFT", 0)
 						tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp,
 							string.format("realid:%s:%s:%d:%s:%s",
-								player["TOONNAME"], player["GIVENNAME"], player["PRESENCEID"], player["CLIENT"], player["REALMNAME"]))
+								player["TOONNAME"], player["ACCTNAME"], player["PRESENCEID"], player["CLIENTRAW"], player["REALMNAME"]))
 					end
 				end
 				tooltip:AddLine(" ")
@@ -871,11 +826,12 @@ function LDB.OnEnter(self)
 			if numFriendsOnline > 0 then
 				local friend_table = {}
 				for i = 1,numFriendsOnline do
-					local note, status
+					local note
+					local status = ONLINE_ICON
 					local info = C_FriendList.GetFriendInfoByIndex(i)
 
 					note = info.notes
-					note = note and "|cffff8800{"..note.."}|r" or ""
+					note = note and "|cffff8800"..note.."|r" or ""
 
 					if info.afk == CHAT_FLAG_AFK then
 						status = AWAY_ICON
@@ -902,13 +858,13 @@ function LDB.OnEnter(self)
 
 				for _, player in ipairs(friend_table) do
 					line = tooltip:AddLine()
-					line = tooltip:SetCell(line, 1, ColoredLevel(player["LEVEL"]))
-					line = tooltip:SetCell(line, 2, player["STATUS"])
-					line = tooltip:SetCell(line, 3,
+					line = tooltip:SetCell(line, 3, player["STATUS"])
+					line = tooltip:SetCell(line, 4,
 						string.format("|cff%s%s", GGSocialState_CLASS_COLORS[player["CLASS"]] or "ffffff", player["TOONNAME"] .. "|r") .. (inGroup(player["TOONNAME"]) and GROUP_CHECKMARK or ""));
-					line = tooltip:SetCell(line, 5, player["ZONENAME"])
+					line = tooltip:SetCell(line, 5, ColoredLevel(player["LEVEL"]))
+					line = tooltip:SetCell(line, 6, player["ZONENAME"])
 					if not GGSocialStateDB.hide_friend_notes then
-						line = tooltip:SetCell(line, 7, player["NOTE"])
+						line = tooltip:SetCell(line, 8, player["NOTE"])
 					end
 
 					tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("friends:%s:%s", player["TOONNAME"], player["TOONNAME"]))
@@ -961,19 +917,19 @@ function LDB.OnEnter(self)
 			line = tooltip:AddHeader()
 			line = tooltip:SetCell(line, 1, "  ")
 			tooltip:SetCellScript(line, 1, "OnMouseUp", SetGuildSort, "LEVEL")
-			line = tooltip:SetCell(line, 3, _G.NAME)
-			tooltip:SetCellScript(line, 3, "OnMouseUp", SetGuildSort, "TOONNAME")
+			line = tooltip:SetCell(line, 2, _G.NAME)
+			tooltip:SetCellScript(line, 2, "OnMouseUp", SetGuildSort, "TOONNAME")
 			line = tooltip:SetCell(line, 5, _G.ZONE)
 			tooltip:SetCellScript(line, 5, "OnMouseUp", SetGuildSort, "ZONENAME")
 			line = tooltip:SetCell(line, 6, _G.RANK)
 			tooltip:SetCellScript(line, 6, "OnMouseUp", SetGuildSort, "RANKINDEX")
 
 			if not GGSocialStateDB.hide_guild_onotes then
-				line = tooltip:SetCell(line, 7, _G.NOTE_COLON)
+				line = tooltip:SetCell(line, 8, _G.NOTE_COLON)
 			else
-				line = tooltip:SetCell(line, 7, MINIMIZE .. _G.NOTE_COLON)
+				line = tooltip:SetCell(line, 8, MINIMIZE .. _G.NOTE_COLON)
 			end
-			tooltip:SetCellScript(line, 7, "OnMouseUp", HideOnMouseUp, "hide_guild_onotes")
+			tooltip:SetCellScript(line, 8, "OnMouseUp", HideOnMouseUp, "hide_guild_onotes")
 
 			tooltip:AddSeparator()
 
@@ -1016,8 +972,8 @@ function LDB.OnEnter(self)
 			for _, player in ipairs(guild_table) do
 				line = tooltip:AddLine()
 				line = tooltip:SetCell(line, 1, ColoredLevel(player["LEVEL"]))
-				line = tooltip:SetCell(line, 2, player["STATUS"])
-				line = tooltip:SetCell(line, 3,
+				line = tooltip:SetCell(line, 3, player["STATUS"])
+				line = tooltip:SetCell(line, 2,
 					string.format("|cff%s%s", GGSocialState_CLASS_COLORS[player["CLASS"]] or "ffffff", Ambiguate(player["TOONNAME"], "guild") .. "|r") .. (inGroup(Ambiguate(player["TOONNAME"], "guild")) and GROUP_CHECKMARK or ""))
 				line = tooltip:SetCell(line, 4, player["TOONALIAS"])
 				line = tooltip:SetCell(line, 5, player["ZONENAME"] or "???")
@@ -1084,6 +1040,8 @@ frame:SetScript("OnUpdate",
 )
 
 function frame:PLAYER_LOGIN()
+	local GGSocialStateDB
+
 	if not GGSocialStateDB then
 		-- Initialize default configuration
 		GGSocialStateDB = {}
