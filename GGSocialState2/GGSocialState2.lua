@@ -619,7 +619,6 @@ function GetBNetFriends()
 			for gameAccountIndex = 1, C_BattleNet.GetFriendNumGameAccounts(i) do
 				local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(i, gameAccountIndex)
 				local client = gameAccountInfo.clientProgram
-				local wowClassic = ""
 				local temp = {}
 
 				-- Set the name of the client program from BNET_CLIENT and change its color
@@ -628,31 +627,27 @@ function GetBNetFriends()
 				-- If WoW, update some variable formatting
 				if (client == "WoW") then
 					local name = gameAccountInfo.characterName
-					local presence = gameAccountInfo.richPresence
 					local realmName = gameAccountInfo.realmName
 
 					if gameAccountInfo.wowProjectID == 2 then
-						wowClassic = " (Classic)"
+						realmName = gameAccountInfo.richPresence
 					end
 
 					-- Make the color of characterName be the class color
 					local name = string.format("|cff%s%s",GGSocialState_CLASS_COLORS[gameAccountInfo.className] or "B8B8B8",
-						name .. "|r") ..
-							(inGroup(name) and GROUP_CHECKMARK or "")
+						name .. "|r") .. (inGroup(name) and GROUP_CHECKMARK or "")
 
-					if gameAccountInfo.areaName and gameAccountInfo.realmName then
+					if gameAccountInfo.areaName and realmName then
 						-- Make the color of realmName be the faction color
 						if gameAccountInfo.factionName == "Horde" then
-							realmName = FACTION_COLOR_HORDE .. gameAccountInfo.realmName .. "|r" .. wowClassic
+							realmName = FACTION_COLOR_HORDE .. realmName .. "|r"
 						else
-							realmName = FACTION_COLOR_ALLIANCE .. gameAccountInfo.realmName .. "|r" .. wowClassic
+							realmName = FACTION_COLOR_ALLIANCE .. realmName .. "|r"
 						end
-						presence = gameAccountInfo.areaName .. " - " .. gameAccountInfo.realmName .. "|r"
 					end
 
 					gameAccountInfo.characterName = name
 					gameAccountInfo.characterLevel = ColoredLevel(gameAccountInfo.characterLevel)
-					gameAccountInfo.richPresence = presence
 					gameAccountInfo.realmName = realmName
 				end
 
@@ -719,6 +714,7 @@ function GetBNetFriends()
 			end
 		end
 	end
+
 	return friends
 end
 
