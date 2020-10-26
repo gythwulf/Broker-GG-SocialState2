@@ -276,28 +276,20 @@ local GetNumRaidMembers = MISTS_OF_PANDARIA and GetNumGroupMembers or GetNumRaid
 
 --find alias in GuildGreet
 local function GGSocialState_GetGGAlias(toonName)
-	if GLDG_DataChar then
-		if GLDG_DataChar[toonName].alias ~=nil then
-			return GLDG_DataChar[toonName].alias
-		else
-			return nil
-		end
-	else
-		return nil
+	if GLDG_DataChar and GLDG_DataChar[toonName] ~= nil and GLDG_DataChar[toonName].alias ~= nil then
+		return GLDG_DataChar[toonName].alias
 	end
+
+	return nil
 end
 
 --find main in Guildgreet
 local function GGSocialState_GetGGMain(toonName)
-	if GLDG_DataChar then
-		if GLDG_DataChar[toonName].alt ~=nil then
-			return string.format("|cff%s%s", GGSocialState_CLASS_COLORS[GLDG_DataChar[GLDG_DataChar[toonName].alt].class] or "B8B8B8", Ambiguate(GLDG_DataChar[toonName].alt, "guild") .. "|r") --enClass
-		else
-			return nil
-		end
-	else
-		return nil
+	if GLDG_DataChar and GLDG_DataChar[toonName] ~= nil and GLDG_DataChar[toonName].alt ~= nil then
+		return string.format("|cff%s%s", GGSocialState_CLASS_COLORS[GLDG_DataChar[GLDG_DataChar[toonName].alt].class] or "B8B8B8", Ambiguate(GLDG_DataChar[toonName].alt, "guild") .. "|r") --enClass
 	end
+
+	return nil
 end
 
 --display (main / alias) from GuildGreet
@@ -983,9 +975,10 @@ function LDB.OnEnter(self)
 			for _, player in ipairs(guild_table) do
 				line = tooltip:AddLine()
 				line = tooltip:SetCell(line, 1, ColoredLevel(player["LEVEL"]))
-				line = tooltip:SetCell(line, 3, player["STATUS"])
 				line = tooltip:SetCell(line, 2,
-					string.format("|cff%s%s", GGSocialState_CLASS_COLORS[player["CLASS"]] or "ffffff", Ambiguate(player["TOONNAME"], "guild") .. "|r") .. (inGroup(Ambiguate(player["TOONNAME"], "guild")) and GROUP_CHECKMARK or ""))
+					string.format("|cff%s%s", GGSocialState_CLASS_COLORS[player["CLASS"]] or "ffffff", Ambiguate(player["TOONNAME"], "guild") .. "|r")
+							.. (inGroup(Ambiguate(player["TOONNAME"], "guild")) and GROUP_CHECKMARK or ""))
+				line = tooltip:SetCell(line, 3, player["STATUS"])
 				line = tooltip:SetCell(line, 4, player["TOONALIAS"])
 				line = tooltip:SetCell(line, 5, player["ZONENAME"] or "???")
 				line = tooltip:SetCell(line, 6, player["RANK"])
