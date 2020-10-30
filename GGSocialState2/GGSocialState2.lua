@@ -1044,7 +1044,7 @@ frame:SetScript("OnUpdate",
 )
 
 function frame:PLAYER_LOGIN()
-	local GGSocialStateDB
+	GGSocialStateDB
 
 	if not GGSocialStateDB then
 		-- Initialize default configuration
