@@ -1,11 +1,11 @@
-## Interface: 90001
+## Interface: 90002
 ## Title: Broker: GGSocialState2
-## Version: 9.0.1-09
+## Version: 9.0.2-01
 ## Notes: A friend/guild list viewer
 ## Author: Luzisto, gOOvER, Gythwulf
 ## SavedVariables: GGSocialStateDB
 ## OptionalDeps: Ace3, LibQTip-1.0, LibStub, CallbackHandler-1.0
-## X-Curse-Packaged-Version: 9.0.1
+## X-Curse-Packaged-Version: 9.0.2
 ## X-Curse-Project-Name: Broker: GGSocialState2
 ## X-Curse-Project-ID: broker-ggsocialstate2
 ## X-Curse-Repository-ID: wow/broker-gg-socialstate2/mainline

@@ -50,6 +50,7 @@ BNET_CLIENT["Hero"] = "Hero of the Storm"
 BNET_CLIENT["Pro"]  = "Overwatch"
 BNET_CLIENT["S1"]   = "Starcraft: Remastered"
 BNET_CLIENT["DST2"] = "Destiny 2"
+BNET_CLIENT["ZEUS"] = "Call of Duty: Black Ops"
 BNET_CLIENT["VIPR"] = "Call of Duty: Black Ops 4"
 BNET_CLIENT["ODIN"] = "Call of Duty: Modern Warfare"
 BNET_CLIENT["LAZR"] = "Call of Duty: Modern Warfare 2"
@@ -643,8 +644,10 @@ function GetBNetFriends()
 						end
 					end
 
+					rawName = gameAccountInfo.characterName
 					gameAccountInfo.characterName = name
 					gameAccountInfo.characterLevel = ColoredLevel(gameAccountInfo.characterLevel)
+					rawRealmName = gameAccountInfo.realmName
 					gameAccountInfo.realmName = realmName
 				end
 
@@ -665,10 +668,12 @@ function GetBNetFriends()
 					SURNAME = accountInfo.battleTag,
 					PRESENCEID = accountInfo.bnetAccountID,
 					TOONNAME = gameAccountInfo.characterName or "",
+					TOONNAMERAW = rawName or "",
 					LEVEL = gameAccountInfo.characterLevel or "",
 					CLASS = gameAccountInfo.className or "",
 					ZONENAME = zoneName or gameAccountInfo.richPresence or "",
 					REALMNAME = gameAccountInfo.realmName or "",
+					REALMNAMERAW = rawRealmName or "",
 					STATUS = "",
 					CLIENTICON = CLIENT_ICON_TEXTURE_CODES[client],
 					CLIENT = gameAccountInfo.clientProgram,
@@ -813,14 +818,14 @@ function LDB.OnEnter(self)
 					end
 
 					tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp, string.format("realid:%s:%s:%d:%s:%s",
-						player["TOONNAME"], player["ACCTNAME"], player["PRESENCEID"], player["CLIENTRAW"], player["REALMNAME"]))
+						player["TOONNAMERAW"], player["ACCTNAME"], player["PRESENCEID"], player["CLIENTRAW"], player["REALMNAMERAW"]))
 
 					if GGSocialStateDB.expand_realID and player["BROADCAST_TEXT"] ~= "" then
 						line = tooltip:AddLine()
 						line = tooltip:SetCell(line, 1, BROADCAST_ICON .. " " .. player["BROADCAST_TEXT"], "LEFT", 0)
 						tooltip:SetLineScript(line, "OnMouseUp", Entry_OnMouseUp,
 							string.format("realid:%s:%s:%d:%s:%s",
-								player["TOONNAME"], player["ACCTNAME"], player["PRESENCEID"], player["CLIENTRAW"], player["REALMNAME"]))
+								player["TOONNAMERAW"], player["ACCTNAME"], player["PRESENCEID"], player["CLIENTRAW"], player["REALMNAMERAW"]))
 					end
 				end
 				tooltip:AddLine(" ")
