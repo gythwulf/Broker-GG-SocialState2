@@ -965,9 +965,9 @@ function LDB.OnEnter(self)
 						TOONALIAS = GGSocialState_GetMainAlt(toonName),
 						RANK = rank,
 						RANKINDEX = rankindex,
-						LEVEL = level,
-						CLASS = class,
-						ZONENAME = zoneName,
+						LEVEL = level or "",
+						CLASS = class or "",
+						ZONENAME = zoneName or "",
 						NOTE = note,
 						ONOTE = onote,
 						STATUS = status
