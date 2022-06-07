@@ -43,6 +43,7 @@ local BNET_CLIENT = {}
 BNET_CLIENT["WoW"]  = "World of Warcraft"
 BNET_CLIENT["S2"]   = "StarCraft 2"
 BNET_CLIENT["D3"]   = "Diablo 3"
+BNET_CLIENT["ANBS"] = "Diablo Immortal"
 BNET_CLIENT["WTCG"] = "Hearthstone"
 BNET_CLIENT["App"]  = "Battle.net Desktop App"
 BNET_CLIENT["BSAp"] = "Battle.net Mobile App"
