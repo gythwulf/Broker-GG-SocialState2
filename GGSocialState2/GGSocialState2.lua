@@ -41,27 +41,28 @@ local FACTION_COLOR_ALLIANCE = "|cff0070dd"
 
 local BNET_CLIENT = {}
 BNET_CLIENT["WoW"]  = "World of Warcraft"
+BNET_CLIENT["S1"]   = "Starcraft: Remastered"
 BNET_CLIENT["S2"]   = "StarCraft 2"
-BNET_CLIENT["D3"]   = "Diablo 3"
+BNET_CLIENT["OSI"]  = "Diablo II: Resurrected"
+BNET_CLIENT["D3"]   = "Diablo III"
 BNET_CLIENT["ANBS"] = "Diablo Immortal"
 BNET_CLIENT["WTCG"] = "Hearthstone"
 BNET_CLIENT["App"]  = "Battle.net Desktop App"
 BNET_CLIENT["BSAp"] = "Battle.net Mobile App"
 BNET_CLIENT["Hero"] = "Hero of the Storm"
 BNET_CLIENT["Pro"]  = "Overwatch"
-BNET_CLIENT["S1"]   = "Starcraft: Remastered"
 BNET_CLIENT["DST2"] = "Destiny 2"
 BNET_CLIENT["ZEUS"] = "Call of Duty: Black Ops"
 BNET_CLIENT["VIPR"] = "Call of Duty: Black Ops 4"
 BNET_CLIENT["ODIN"] = "Call of Duty: Modern Warfare"
 BNET_CLIENT["LAZR"] = "Call of Duty: Modern Warfare 2"
 BNET_CLIENT["W3"]   = "Warcraft III: Reforged"
+BNET_CLIENT["RTRO"] = "Blizzard Arcade Collection"
+BNET_CLIENT["WLBY"] = "Crash Bandicoot 4"
+BNET_CLIENT["FORE"] = "Call of Duty: Vanguard"
+BNET_CLIENT["GRY"]  = "Warcraft Arclight Rumble"
 
 local CLIENT_ICON_SIZE = 18
-local CLIENT_ICON_TEXTURE_CODES = {}
-for client in pairs(BNET_CLIENT) do
-	CLIENT_ICON_TEXTURE_CODES[client] = _G.BNet_GetClientEmbeddedTexture(client, CLIENT_ICON_SIZE, CLIENT_ICON_SIZE)
-end
 
 -------------------------------------------------------------------------------
 -- Font definitions.
@@ -255,11 +256,19 @@ local options = {
 		},
 		split_ldb_friends = {
 			order = 11,
-			type = "toggle", width = "normal",
+			type = "toggle", width = "double",
 			name = L["Split Real ID and Normal Friends"],
 			desc = L["Split Real ID and Normal Friends on the LDB"],
 			get = function() return GGSocialStateDB.split_LDB_friends end,
 			set = function(_, v) GGSocialStateDB.split_LDB_friends = v update_Broker() end
+		},
+		hide_ldb_inapp = {
+			order = 12,
+			type = "toggle", width = "normal",
+			name = L["Hide InApp Friends"],
+			desc = L["Hide RealID friends that are \"In App\""],
+			get = function () return GGSocialStateDB.hide_LDB_inapp end,
+			set = function(_, v) GGSocialStateDB.hide_LDB_inapp = v update_Broker() end
 		}
 	}
 }
@@ -617,18 +626,21 @@ function GetBNetFriends()
 			for gameAccountIndex = 1, C_BattleNet.GetFriendNumGameAccounts(i) do
 				local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(i, gameAccountIndex)
 				local client = gameAccountInfo.clientProgram
+				local projectID = gameAccountInfo.wowProjectID
 				local zoneName = gameAccountInfo.areaName
 				local temp = {}
 
 				-- Set the name of the client program from BNET_CLIENT and change its color
-				gameAccountInfo.clientProgram = BNET_CLIENT[gameAccountInfo.clientProgram]
-
+				if (BNET_CLIENT[client]) then
+					gameAccountInfo.clientProgram = BNET_CLIENT[client]
+				end
+				
 				-- If WoW, update some variable formatting
 				if (client == "WoW") then
 					local name = gameAccountInfo.characterName
 					local realmName = gameAccountInfo.realmName
 
-					if gameAccountInfo.wowProjectID == 2 then
+					if (projectID == WOW_PROJECT_CLASSIC or projectID == 5 or projectID == 11) then
 						realmName = gameAccountInfo.richPresence
 					end
 
@@ -676,7 +688,7 @@ function GetBNetFriends()
 					REALMNAME = gameAccountInfo.realmName or "",
 					REALMNAMERAW = rawRealmName or "",
 					STATUS = "",
-					CLIENTICON = CLIENT_ICON_TEXTURE_CODES[client],
+					CLIENTICON = _G.BNet_GetClientEmbeddedTexture(client, CLIENT_ICON_SIZE, CLIENT_ICON_SIZE),
 					CLIENT = gameAccountInfo.clientProgram,
 					CLIENTRAW = client,
 					GAMETEXT = gameAccountInfo.richPresence,
@@ -696,7 +708,9 @@ function GetBNetFriends()
 						BSApBusy = gameAccountInfo.isGameBusy
 					end
 
-					table.insert(secondary, temp)
+					if not GGSocialStateDB.hide_LDB_inapp then
+						table.insert(secondary, temp)
+					end
 				else
 					table.insert(primary, temp)
 				end
