@@ -42,4 +42,3 @@ L["Hide RealID friends that are \"In App\""] = "RealID-Freunde ausblenden, die \
 L["The tooltip will hide when not hovered over for this (default: 0.25)"] = "Nach dieser Zeit wird der Tooltipp geschlossen wenn die Maus ihn verlässt"
 L["to open the friends panel."] = "zum Öffnen des Freunde-Fensters"
 L["to open the guild panel."] = "zum Öffnen des Gilden-Fensters"
-

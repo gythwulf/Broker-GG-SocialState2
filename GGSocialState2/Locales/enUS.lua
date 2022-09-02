@@ -48,4 +48,3 @@ L["Hide RealID friends that are \"In App\""] = true
 L["The tooltip will hide when not hovered over for this (default: 0.25)"] = true
 L["to open the friends panel."] = true
 L["to open the guild panel."] = true
-
