@@ -640,7 +640,7 @@ function GetBNetFriends()
 					local name = gameAccountInfo.characterName
 					local realmName = gameAccountInfo.realmName
 
-					if (projectID == WOW_PROJECT_CLASSIC or projectID == 5) then
+					if (projectID == WOW_PROJECT_CLASSIC or projectID == 5 or projectID == 11) then
 						realmName = gameAccountInfo.richPresence
 					end
 
