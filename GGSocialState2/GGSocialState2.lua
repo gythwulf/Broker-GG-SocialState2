@@ -67,20 +67,20 @@ local CLIENT_ICON_SIZE = 18
 -------------------------------------------------------------------------------
 -- Font definitions.
 -------------------------------------------------------------------------------
+local tooltipFont = GameTooltipText:GetFont()
 -- Setup the Title Font. 14
 local ssTitleFont = CreateFont("ssTitleFont")
 ssTitleFont:SetTextColor(1,0.823529,0)
-ssTitleFont:SetFont(GameTooltipText:GetFont(), 14)
-
+ssTitleFont:SetFont(tooltipFont, 14, "")
 -- Setup the Header Font. 12
 local ssHeaderFont = CreateFont("ssHeaderFont")
 ssHeaderFont:SetTextColor(1,0.823529,0)
-ssHeaderFont:SetFont(GameTooltipHeaderText:GetFont(), 12)
+ssHeaderFont:SetFont(tooltipFont, 12, "")
 
 -- Setup the Regular Font. 12
 local ssRegFont = CreateFont("ssRegFont")
 ssRegFont:SetTextColor(1,0.823529,0)
-ssRegFont:SetFont(GameTooltipText:GetFont(), 12)
+ssRegFont:SetFont(tooltipFont, 12, "")
 
 local list_sort = {
 	CLIENTICON  =   function(a, b)
@@ -356,20 +356,9 @@ local function ColoredLevel(level)
 	return ("|cff%02x%02x%02x%d|r"):format(color.r * 255, color.g * 255, color.b * 255, level)
 end
 
-GGSocialState_CLASS_COLORS, color = {}, {}
-GGSocialState_classes_female, GGSocialState_classes_male = {}, {}
-
-FillLocalizedClassList(GGSocialState_classes_female, true)
-FillLocalizedClassList(GGSocialState_classes_male, false)
-
-for token, localizedName in pairs(GGSocialState_classes_female) do
-	color = RAID_CLASS_COLORS[token]
-	GGSocialState_CLASS_COLORS[localizedName] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
-end
-
-for token, localizedName in pairs(GGSocialState_classes_male) do
-	color = RAID_CLASS_COLORS[token]
-	GGSocialState_CLASS_COLORS[localizedName] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
+GGSocialState_CLASS_COLORS = {}
+for class, color in pairs(RAID_CLASS_COLORS) do
+	GGSocialState_CLASS_COLORS[class] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
 end
 
 ---------------------
@@ -640,7 +629,9 @@ function GetBNetFriends()
 					local name = gameAccountInfo.characterName
 					local realmName = gameAccountInfo.realmName
 
-					if (projectID == WOW_PROJECT_CLASSIC or projectID == 5 or projectID == 11) then
+					-- If the friend's projectID is not equal to our projectID,
+					-- display richPresense instead of realmName
+					if (projectID ~= WOW_PROJECT_ID) then
 						realmName = gameAccountInfo.richPresence
 					end
 
