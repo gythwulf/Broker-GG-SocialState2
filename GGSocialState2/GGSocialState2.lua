@@ -285,6 +285,20 @@ local GetNumRaidMembers = MISTS_OF_PANDARIA and GetNumGroupMembers or GetNumRaid
 -- Helper Routines
 -------------------------------------------------------------------------------
 
+--dump a variable for debugging
+function dump(o)
+	if type(o) == 'table' then
+		local s = "{\n"
+		for k,v in pairs(o) do
+			if type(k) ~= 'number' then k = '"'..k..'"' end
+			s = s .. '['..k..'] = ' .. dump(v) .. ",\n"
+		end
+		return s .. "}\n"
+	else
+		return tostring(o)
+	end
+end
+
 --find alias in GuildGreet
 local function GGSocialState_GetGGAlias(toonName)
 	if GLDG_DataChar and GLDG_DataChar[toonName] ~= nil and GLDG_DataChar[toonName].alias ~= nil then
@@ -357,8 +371,11 @@ local function ColoredLevel(level)
 end
 
 GGSocialState_CLASS_COLORS = {}
+GGSocialState_CLASS_NAME = {}
+FillLocalizedClassList(GGSocialState_CLASS_NAME, false)
+
 for class, color in pairs(RAID_CLASS_COLORS) do
-	GGSocialState_CLASS_COLORS[class] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
+	GGSocialState_CLASS_COLORS[GGSocialState_CLASS_NAME[class]] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
 end
 
 ---------------------
@@ -554,18 +571,6 @@ function LDB:OnClick(button)
 	end
 end
 
-function dump(o)
-	if type(o) == 'table' then
-		local s = "{\n"
-		for k,v in pairs(o) do
-			if type(k) ~= 'number' then k = '"'..k..'"' end
-			s = s .. '['..k..'] = ' .. dump(v) .. ",\n"
-		end
-		return s .. "}\n"
-	else
-		return tostring(o)
-	end
-end
 
 ---------------------
 --  Event Section  --
