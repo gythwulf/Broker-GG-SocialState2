@@ -375,8 +375,11 @@ GGSocialState_CLASS_NAME = {}
 FillLocalizedClassList(GGSocialState_CLASS_NAME, false)
 
 for class, color in pairs(RAID_CLASS_COLORS) do
-	GGSocialState_CLASS_COLORS[GGSocialState_CLASS_NAME[class]] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
+	if GGSocialState_CLASS_NAME[class] ~= nil then
+		GGSocialState_CLASS_COLORS[GGSocialState_CLASS_NAME[class]] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
+	end
 end
+
 
 ---------------------
 --  Update button  --
