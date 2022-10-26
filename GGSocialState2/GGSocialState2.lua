@@ -269,6 +269,13 @@ local options = {
 			desc = L["Hide RealID friends that are \"In App\""],
 			get = function () return GGSocialStateDB.hide_LDB_inapp end,
 			set = function(_, v) GGSocialStateDB.hide_LDB_inapp = v update_Broker() end
+		},
+		current_game_only = {
+			order = 13,
+			type = "toggle", width = "normal",
+			name = L["Show current game only"],
+			get = function () return GGSocialStateDB.current_game_only end,
+			set = function(_, v) GGSocialStateDB.current_game_only = v update_Broker() end
 		}
 	}
 }
@@ -379,7 +386,6 @@ for class, color in pairs(RAID_CLASS_COLORS) do
 		GGSocialState_CLASS_COLORS[GGSocialState_CLASS_NAME[class]] = string.format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
 	end
 end
-
 
 ---------------------
 --  Update button  --
@@ -687,7 +693,7 @@ function GetBNetFriends()
 					REALMNAME = gameAccountInfo.realmName or "",
 					REALMNAMERAW = rawRealmName or "",
 					STATUS = "",
-					CLIENTICON = _G.BNet_GetClientEmbeddedTexture(client, CLIENT_ICON_SIZE, CLIENT_ICON_SIZE),
+					CLIENTICON = _G.BNet_GetClientEmbeddedAtlas(client, CLIENT_ICON_SIZE, CLIENT_ICON_SIZE),
 					CLIENT = gameAccountInfo.clientProgram,
 					CLIENTRAW = client,
 					GAMETEXT = gameAccountInfo.richPresence,
@@ -710,7 +716,7 @@ function GetBNetFriends()
 					if not GGSocialStateDB.hide_LDB_inapp then
 						table.insert(secondary, temp)
 					end
-				else
+				elseif not GGSocialStateDB.current_game_only or projectID == WOW_PROJECT_ID then
 					table.insert(primary, temp)
 				end
 			end
