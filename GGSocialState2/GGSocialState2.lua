@@ -61,6 +61,7 @@ BNET_CLIENT["RTRO"] = "Blizzard Arcade Collection"
 BNET_CLIENT["WLBY"] = "Crash Bandicoot 4"
 BNET_CLIENT["FORE"] = "Call of Duty: Vanguard"
 BNET_CLIENT["GRY"]  = "Warcraft Arclight Rumble"
+BNET_CLIENT["Fen"] = "Diablo IV"
 
 local CLIENT_ICON_SIZE = 18
 
@@ -594,10 +595,10 @@ function LDB.OnLeave() end
 
 function GetBNetFriends()
 	local friends = {}
-	local _, numBNOnline = BNGetNumFriends()
+	local numBNFriends = BNGetNumFriends()
 
-	if (numBNOnline > 0) then
-		for i = 1, numBNOnline do
+	if (numBNFriends > 0) then
+		for i = 1, numBNFriends do
 			local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
 			local primary, secondary = {}, {}
 			local status = ONLINE_ICON
@@ -617,9 +618,7 @@ function GetBNetFriends()
 			end
 
 			-- Set initial BNET account status
-			if accountInfo.isDND then status = BUSY_ICON end
 			if accountInfo.isAFK then status = AWAY_ICON end
-			if accountInfo.isBusy then status = BUSY_ICON end
 
 			-- Set note color
 			if note and note ~= "" then note = "|cffff8800" .. note .. "|r" end
@@ -633,9 +632,16 @@ function GetBNetFriends()
 				local zoneName = gameAccountInfo.areaName
 				local temp = {}
 
+				-- Set initial BNET account status				
+				--if gameAccountInfo.isDND then status = BUSY_ICON end
+				--if gameAccountInfo.isGameAFK then status = AWAY_ICON end
+				--if gameAccountInfo.isGameBusy then status = BUSY_ICON end
+		
 				-- Set the name of the client program from BNET_CLIENT and change its color
 				if (BNET_CLIENT[client]) then
 					gameAccountInfo.clientProgram = BNET_CLIENT[client]
+				else
+					print(dump(client))
 				end
 				
 				-- If WoW, update some variable formatting
@@ -758,7 +764,9 @@ function LDB.OnEnter(self)
 	LDB_ANCHOR = self
 
 	if LibQTip:IsAcquired("GGSocialState") then
-		tooltip:Clear()
+		if tooltip then
+			tooltip:Clear()
+		end
 	else
 		tooltip = LibQTip:Acquire("GGSocialState", 9, "CENTER", "LEFT", "RIGHT", "LEFT", "LEFT", "CENTER", "CENTER", "RIGHT")
 
@@ -771,6 +779,10 @@ function LDB.OnEnter(self)
 		tooltip:SetAutoHideDelay(GGSocialStateDB.tooltip_autohide, self)
 	end
 
+	if not tooltip then
+		return
+	end
+	
 	local line = tooltip:AddLine()
 	tooltip:SetCell(line, 1, "GGSocialState2", ssTitleFont, "CENTER", 0)
 	tooltip:AddLine(" ")

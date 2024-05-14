@@ -1,6 +1,6 @@
 ## Interface: 90002
 ## Title: Broker: GGSocialState2
-## Version: 9.0.2-09
+## Version: 9.0.2-12
 ## Notes: A friend/guild list viewer
 ## Author: Luzisto, gOOvER, Gythwulf
 ## SavedVariables: GGSocialStateDB
@@ -12,13 +12,13 @@
 
 
 #@no-lib-strip@
-Libs\LibStub\LibStub.lua
-Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
-Libs\AceGUI-3.0\AceGUI-3.0.xml
-Libs\AceConfig-3.0\AceConfig-3.0.xml
-Libs\AceLocale-3.0\AceLocale-3.0.xml
-Libs\LibQTip-1.0\lib.xml
-Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+#Libs\LibStub\LibStub.lua
+#Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+#Libs\AceGUI-3.0\AceGUI-3.0.xml
+#Libs\AceConfig-3.0\AceConfig-3.0.xml
+#Libs\AceLocale-3.0\AceLocale-3.0.xml
+#Libs\LibQTip-1.0\lib.xml
+#Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 #@end-no-lib-strip@
 
 embeds.xml
