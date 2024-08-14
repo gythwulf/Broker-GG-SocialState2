@@ -379,8 +379,7 @@ local function ColoredLevel(level)
 end
 
 GGSocialState_CLASS_COLORS = {}
-GGSocialState_CLASS_NAME = {}
-FillLocalizedClassList(GGSocialState_CLASS_NAME, false)
+GGSocialState_CLASS_NAME = LocalizedClassList(false)
 
 for class, color in pairs(RAID_CLASS_COLORS) do
 	if GGSocialState_CLASS_NAME[class] ~= nil then
@@ -930,8 +929,21 @@ function LDB.OnEnter(self)
 			tooltip:SetCellScript(line, 1, "OnMouseUp", HideOnMouseUp, "minimize_gmotd")
 
 			if not GGSocialStateDB.minimize_gmotd then
-				line = tooltip:AddLine()
-				tooltip:SetCell(line, 1, "|cff00ff00"..GetGuildRosterMOTD().."|r", "LEFT", 0, nil, nil, nil)
+				local motd = GetGuildRosterMOTD()
+				local strlen = string.len(motd)
+				local index = 0
+				local maxlen = 99
+				while index < strlen do
+					local line = tooltip:AddLine()
+					local len = maxlen
+					local substr = string.sub(motd, index, index + maxlen)
+					while maxlen + index < strlen and string.sub(motd, index + len, index + len) ~= " " and len > 0 do
+						len = len - 1
+					end
+					substr = string.sub(motd, index, index + len)
+					index = index + len + 1
+					tooltip:SetCell(line, 1, "|cff00ff00"..substr.."|r", "LEFT", 0, nil, nil, nil)
+				end
 			end
 
 			tooltip:AddLine(" ")
