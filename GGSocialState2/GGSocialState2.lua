@@ -378,6 +378,12 @@ local function ColoredLevel(level)
 	return ("|cff%02x%02x%02x%d|r"):format(color.r * 255, color.g * 255, color.b * 255, level)
 end
 
+local function getClientLogo(client, size)
+	size = size or 0
+	local atlas = BNet_GetClientAtlas("Battlenet-ClientIcon-", client)
+	return CreateAtlasMarkup(atlas, size, size, 0, 0)
+end
+
 GGSocialState_CLASS_COLORS = {}
 GGSocialState_CLASS_NAME = LocalizedClassList(false)
 
@@ -698,7 +704,7 @@ function GetBNetFriends()
 					REALMNAME = gameAccountInfo.realmName or "",
 					REALMNAMERAW = rawRealmName or "",
 					STATUS = "",
-					CLIENTICON = _G.BNet_GetClientEmbeddedAtlas(client, CLIENT_ICON_SIZE, CLIENT_ICON_SIZE),
+					CLIENTICON = getClientLogo(client, CLIENT_ICON_SIZE),
 					CLIENT = gameAccountInfo.clientProgram,
 					CLIENTRAW = client,
 					GAMETEXT = gameAccountInfo.richPresence,
